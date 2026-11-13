@@ -1,6 +1,6 @@
 # 原型驗收清單
 
-日期：2026-11-13｜版本：v0.1.0 本機交付
+日期：2026-11-13｜版本：v0.1.0 公開預覽
 
 狀態圖例：待執行／通過／未通過／受環境限制。只有實際執行且保存證據後，才能將項目改為通過。
 
@@ -50,11 +50,15 @@ M-03 僅是單一瀏覽器資料模型的順序操作測試，不代表資料庫
 
 | 項目 | 結果／證據 |
 | --- | --- |
-| 原碼提交／PR | 本機交付完成；xk2022/codex-xk-apparel-store 的 public 原碼上傳已獲授權，目前同步進行中，提交 SHA 待完成後核對 |
+| 原碼提交／PR | [PR #2](https://github.com/xk2022/codex-xk-apparel-store/pull/2) 已合併至 `main`；原型程式提交 [`9ddcf3cbaa2dcc32b7d7eae2da366b874307467e`](https://github.com/xk2022/codex-xk-apparel-store/commit/9ddcf3cbaa2dcc32b7d7eae2da366b874307467e) |
 | TypeScript／Node 指令 | `npm test`（先 `tsc --noEmit` 及 `node build.mjs`，再 Node test runner） |
 | 自動測試摘要 | 2026-11-13 03:10 UTC / 11:10 Asia/Taipei，25/25 通過：15 模型、6 happy-dom互動、4離線產物 |
+| 主線 CI | [run 43359111154](https://github.com/xk2022/codex-xk-apparel-store/actions/runs/43359111154) 已完成且成功，對應 `9ddcf3c` |
 | 瀏覽器 QA | 受環境限制；未執行真實瀏覽器視覺／觸控 QA |
-| 預覽／部署 | `review.html` 單檔離線版與 `dist/` 已建置；file URL happy-dom 操作通過。GitHub Pages 採 `gh-pages` 分支根目錄成品，首次啟用與線上驗證待執行 |
-| Pages 首次啟用 | 使用者需至 [設定頁](https://github.com/xk2022/codex-xk-apparel-store/settings/pages)，設定 Source=`Deploy from a branch`、Branch=`gh-pages`、資料夾=`/(root)`，按 `Save`；尚未啟用或驗證完成 |
-| 預定公開網址 | https://xk2022.github.io/codex-xk-apparel-store/；尚待啟用與驗證，不宣稱已可使用 |
-| 客戶風格／流程驗收 | 待客戶回饋 |
+| 離線預覽 | `review.html` 單檔離線版與 `dist/` 已建置；file URL happy-dom 操作通過 |
+| Pages 成品／部署 | `gh-pages` 根目錄成品提交 [`302f9580fa6b74f153964d8834274510f5f638cc`](https://github.com/xk2022/codex-xk-apparel-store/commit/302f9580fa6b74f153964d8834274510f5f638cc)；[部署 run 43359061053](https://github.com/xk2022/codex-xk-apparel-store/actions/runs/43359061053) 已完成且成功 |
+| 公開預覽網址 | 已發布：https://xk2022.github.io/codex-xk-apparel-store/ |
+| HTTP／產物驗證 | 2026-11-13 03:29 UTC／11:29 Asia/Taipei，含首頁在內共 17 個公開檔案皆 HTTP 200，回應內容與本地 `dist/` 逐檔一致：1 HTML、1 CSS、3 JavaScript、3 source maps、9 JPEG |
+| Pages 維護設定 | 已啟用 Source=`Deploy from a branch`、Branch=`gh-pages`、資料夾=`/(root)`；需要重新設定時可至 [設定頁](https://github.com/xk2022/codex-xk-apparel-store/settings/pages) 核對 |
+| 本輪產品任務 | [Issue #1](https://github.com/xk2022/codex-xk-apparel-store/issues/1) 已完成原碼與線上試作交付並關閉 |
+| 客戶風格／流程驗收 | 下一階段，尚未進行，後續另排工作；HTTP／產物核對不代表真實瀏覽器視覺、觸控或 E2E 驗收通過 |
