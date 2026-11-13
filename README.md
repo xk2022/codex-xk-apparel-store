@@ -4,6 +4,8 @@
 
 **假商品、模擬交易；不會收款或寄出商品。請勿填入真實個資。**
 
+已發布的線上預覽：[開啟衣序 SELECT](https://xk2022.github.io/codex-xk-apparel-store/)。
+
 ## 體驗與建置
 
 使用 Node.js 24 LTS 與 npm：
@@ -22,15 +24,15 @@ npm test
 
 ## GitHub Pages 預覽
 
-原始碼公開上傳已獲授權，產品儲存庫為 [codex-xk-apparel-store](https://github.com/xk2022/codex-xk-apparel-store)。靜態預覽採 `gh-pages` 分支，將建置後 `dist/` 的內容放在該分支根目錄。
+公開產品儲存庫為 [codex-xk-apparel-store](https://github.com/xk2022/codex-xk-apparel-store)，線上預覽已發布於 https://xk2022.github.io/codex-xk-apparel-store/ 。原始碼在 `main`，建置後 `dist/` 的內容放在 `gh-pages` 分支根目錄。
 
-首次啟用需由使用者開啟 [GitHub Pages 設定](https://github.com/xk2022/codex-xk-apparel-store/settings/pages)，依序選擇：
+2026-11-13 03:29 UTC／11:29 Asia/Taipei 驗證：含首頁在內共 17 個公開檔案皆回傳 HTTP 200，內容與本地 `dist/` 逐檔一致；原始碼 CI 與 Pages 部署均成功。詳細提交與驗證紀錄見 [驗收證據](docs/ACCEPTANCE.md)。[Issue #1](https://github.com/xk2022/codex-xk-apparel-store/issues/1) 已完成本輪原碼與線上試作交付。客戶風格／流程回饋，以及真實瀏覽器視覺、手機觸控與無障礙驗收屬下一階段，尚未進行，後續另排工作。
+
+後續更新先執行 `npm test`，再將新建置的 `dist/` 內容更新至 `gh-pages`；`main` 的程式修改不會自行同步到成品分支。Pages 目前已啟用，需要重新設定時可至 [GitHub Pages 設定](https://github.com/xk2022/codex-xk-apparel-store/settings/pages) 核對：
 
 1. Source：`Deploy from a branch`。
 2. Branch：`gh-pages`，資料夾：`/(root)`。
-3. 按下 `Save`，等待 GitHub 完成發布。
-
-預定網址為 https://xk2022.github.io/codex-xk-apparel-store/，**尚待啟用與驗證，目前不代表已可開啟**。發布後仍須確認圖片、腳本及選購流程；這只提供模擬原型，沒有正式交易服務。
+3. 設定變更後按 `Save`，等待 GitHub 完成發布，再核對網址與資源。
 
 ## 可以操作的流程
 
