@@ -169,7 +169,7 @@ test('editing shopping bag quantity replaces the retry key and preserves recipie
   await until(() => submissions(requests).length === 2, 'quantity-edited checkout');
   const [first, changed] = submissions(requests);
   assert.notEqual(first.headers['idempotency-key'], changed.headers['idempotency-key']);
-  assert.deepEqual(JSON.parse(changed.body).items, [{ variantId: 101, quantity: 2 }]);
+  assert.deepEqual(JSON.parse(changed.body).items, [{ variantId: 101, quantity: 2, fulfillmentType: 'STOCK' }]);
   assert.equal(JSON.parse(changed.body).customer.email, 'demo@example.com');
 });
 

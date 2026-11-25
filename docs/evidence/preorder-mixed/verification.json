@@ -1,0 +1,126 @@
+{
+  "checkedAt": "2026-11-25 UTC",
+  "branch": "feat/preorder-mixed-checkout",
+  "sourceSHAs": {
+    "littleMe": "0ecb75c4dc2cb393b2d0d9080b215bece66bff3d",
+    "apparel": "056f95ff78069ae62c9c81204a73c8f3db58911a"
+  },
+  "baseSHAs": {
+    "littleMe": "af67863d2819c5c474174ec7002852a7ff7de1fc",
+    "apparel": "5020a1427700a614e29ae41190904e88fea62556"
+  },
+  "versions": {
+    "java": "21.0.13",
+    "springBoot": "3.5.14",
+    "maven": "3.9.11",
+    "postgresql": "17.12",
+    "node": "24.22.3",
+    "chromium": "156"
+  },
+  "commands": [
+    {
+      "cwd": "little-me/frontend",
+      "command": "npm run lint && npm run typecheck && npm test && npm run build",
+      "exitCode": 0,
+      "tests": 25
+    },
+    {
+      "cwd": "little-me/backend",
+      "command": "JAVA_HOME=/workspace/tooling/jdk/usr/lib/jvm/java-21-openjdk-amd64 TEST_DB_URL=jdbc:postgresql://localhost:5433/apparel_pilot_test TEST_DB_USER=littleme TEST_DB_PASSWORD=<local-test-password> ./mvnw -B -s /workspace/tooling/maven-settings.xml clean verify",
+      "exitCode": 0,
+      "tests": 38,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "cwd": "apparel",
+      "command": "npm test",
+      "exitCode": 0,
+      "tests": 44,
+      "includes": [
+        "TypeScript",
+        "build",
+        "original 34 tests",
+        "9 mixed tests",
+        "1 unchanged demo refill retry regression"
+      ],
+      "lint": "no standalone lint script in existing repo"
+    },
+    {
+      "cwd": "little-me",
+      "command": "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium node scripts/mixed-checkout-acceptance.mjs",
+      "exitCode": 0,
+      "orderNo": "LM-7869C66A-812D-48D4",
+      "viewports": [
+        390,
+        1440
+      ],
+      "pageErrors": []
+    }
+  ],
+  "migration": [
+    "V1",
+    "V2",
+    "V3"
+  ],
+  "testDatabase": "apparel_pilot_test (isolated, destructive test fixture)",
+  "browserDatabase": "apparel_pilot (synthetic, final order cancelled)",
+  "suites": [
+    {
+      "name": "com.littleme.MigrationUpgradeTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.littleme.MixedMigrationUpgradeTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.littleme.OrderTransactionsTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.littleme.PreorderMixedCheckoutTest",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.littleme.SafetyApiTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.littleme.StorefrontCheckoutTest",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.littleme.StorefrontPilotDefaultTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "physicalDevice": false,
+  "merged": false,
+  "deployed": false,
+  "note": "SHA identifies tested source; subsequent commits contain README, handoff and evidence only. No private environment files, sessions or customer data committed.",
+  "backendAutomatedTestsSHA": "ab3a8b92386a4a42501e5b3b93345a8f08e033c1",
+  "backendAutomatedTestsSameProgramProof": "git diff --exit-code ab3a8b9 HEAD -- backend frontend doc/api.md => exit 0; only acceptance script later adds mobile viewport and cancellation screenshot"
+}
