@@ -1,3 +1,4 @@
+import { bootPilot } from "./pilot.js";
 import {
   PRODUCTS,
   cloneProducts,
@@ -23,8 +24,10 @@ import {
 declare global {
   interface Window {
     __DEMO_ASSETS__?: Record<string, string>;
+    __APPAREL_PILOT_API_BASE__?: string;
   }
 }
+function bootDemo() {
 type DemoState = {
   products: Product[];
   cart: CartLine[];
@@ -588,3 +591,7 @@ document.addEventListener("keydown", (event) => {
 });
 window.addEventListener("hashchange", route);
 route();
+
+}
+if (typeof window.__APPAREL_PILOT_API_BASE__ === "string") bootPilot(window.__APPAREL_PILOT_API_BASE__);
+else bootDemo();

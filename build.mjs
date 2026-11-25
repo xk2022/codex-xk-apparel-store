@@ -3,7 +3,7 @@ import { cp, mkdir, rm, readFile, writeFile } from "node:fs/promises";
 await rm("dist", { recursive: true, force: true });
 await mkdir("dist/assets", { recursive: true });
 await build({
-  entryPoints: ["src/app.ts", "src/model.ts", "src/catalog.ts"],
+  entryPoints: ["src/app.ts", "src/model.ts", "src/catalog.ts", "src/pilot.ts", "src/pilot-client.ts"],
   outdir: "dist/assets",
   bundle: false,
   format: "esm",
