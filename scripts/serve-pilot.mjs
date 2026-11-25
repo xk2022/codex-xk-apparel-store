@@ -50,7 +50,7 @@ const server = http.createServer(async (req, res) => {
     );
     proxy.on("error", () => {
       if (!res.headersSent)
-        res.writeHead(502, {
+        res.writeHead(503, {
           "content-type": "application/json; charset=utf-8",
           "cache-control": "no-store",
         });
