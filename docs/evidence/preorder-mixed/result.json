@@ -1,0 +1,130 @@
+{
+  "passed": true,
+  "orderId": 7,
+  "orderNo": "LM-7869C66A-812D-48D4",
+  "variantId": 3,
+  "sku": "APP-MIXED-001-OLIVE-S",
+  "items": [
+    {
+      "variantId": 3,
+      "sku": "APP-MIXED-001-OLIVE-S",
+      "styleNo": "APP-MIXED-001",
+      "productName": "衣序混單測試棉上衣",
+      "color": "橄欖綠",
+      "size": "S",
+      "quantity": 1,
+      "unitPrice": 890,
+      "lineTotal": 890,
+      "fulfillmentType": "STOCK",
+      "preorderArrivalNote": ""
+    },
+    {
+      "variantId": 3,
+      "sku": "APP-MIXED-001-OLIVE-S",
+      "styleNo": "APP-MIXED-001",
+      "productName": "衣序混單測試棉上衣",
+      "color": "橄欖綠",
+      "size": "S",
+      "quantity": 1,
+      "unitPrice": 890,
+      "lineTotal": 890,
+      "fulfillmentType": "PREORDER",
+      "preorderArrivalNote": "預計十二月中到貨（本機測試說明）"
+    }
+  ],
+  "shippingNotice": "預購到齊後整單寄出",
+  "subtotal": 1780,
+  "shippingFee": 65,
+  "total": 1845,
+  "balancesAfterCheckout": {
+    "stock": 0,
+    "preorderQuota": 1
+  },
+  "balancesAfterDoubleCancel": {
+    "stock": 1,
+    "preorderQuota": 2
+  },
+  "sameKeyReplayOrderId": 7,
+  "differentContentsHttp": 409,
+  "stockLedger": [
+    {
+      "id": 17,
+      "variantId": 3,
+      "delta": 1,
+      "balance": 1,
+      "reason": "CANCEL",
+      "note": "衣序商城本機測試取消回補",
+      "actor": "owner",
+      "createdAt": "2026-11-25T13:52:38.537738+08:00",
+      "sourceOrderId": 7,
+      "originalMovementId": 16,
+      "sku": "APP-MIXED-001-OLIVE-S",
+      "color": "橄欖綠",
+      "size": "S",
+      "styleNo": "APP-MIXED-001",
+      "productName": "衣序混單測試棉上衣"
+    },
+    {
+      "id": 16,
+      "variantId": 3,
+      "delta": -1,
+      "balance": 0,
+      "reason": "ORDER",
+      "note": "衣序商城本機測試接單",
+      "actor": "STOREFRONT",
+      "createdAt": "2026-11-25T13:52:36.572730+08:00",
+      "sourceOrderId": 7,
+      "originalMovementId": null,
+      "sku": "APP-MIXED-001-OLIVE-S",
+      "color": "橄欖綠",
+      "size": "S",
+      "styleNo": "APP-MIXED-001",
+      "productName": "衣序混單測試棉上衣"
+    }
+  ],
+  "quotaLedger": [
+    {
+      "id": 17,
+      "variantId": 3,
+      "delta": 1,
+      "balance": 2,
+      "reason": "CANCEL",
+      "note": "衣序商城本機測試取消釋回預購配額",
+      "actor": "owner",
+      "createdAt": "2026-11-25T13:52:38.537738+08:00",
+      "sourceOrderId": 7,
+      "orderItemId": 11,
+      "originalMovementId": 16,
+      "sku": "APP-MIXED-001-OLIVE-S",
+      "color": "橄欖綠",
+      "size": "S",
+      "styleNo": "APP-MIXED-001",
+      "productName": "衣序混單測試棉上衣"
+    },
+    {
+      "id": 16,
+      "variantId": 3,
+      "delta": -1,
+      "balance": 1,
+      "reason": "ORDER",
+      "note": "衣序商城本機測試預購",
+      "actor": "STOREFRONT",
+      "createdAt": "2026-11-25T13:52:36.572730+08:00",
+      "sourceOrderId": 7,
+      "orderItemId": 11,
+      "originalMovementId": null,
+      "sku": "APP-MIXED-001-OLIVE-S",
+      "color": "橄欖綠",
+      "size": "S",
+      "styleNo": "APP-MIXED-001",
+      "productName": "衣序混單測試棉上衣"
+    }
+  ],
+  "responseLostRefreshSameBodyAndKey": true,
+  "noAutomaticPreorderFallback": true,
+  "viewports": [
+    390,
+    1440
+  ],
+  "errors": []
+}

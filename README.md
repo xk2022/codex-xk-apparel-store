@@ -6,7 +6,7 @@
 
 已發布的線上預覽：[開啟衣序 SELECT](https://xk2022.github.io/codex-xk-apparel-store/)。
 
-本輪新增 [現貨結帳 × Little Me 本機 pilot](docs/CHECKOUT_PILOT.md)：以獨立測試資料庫驗證現貨接單、冪等重送與庫存回補。只有 `npm run dev:pilot` 明確啟用，普通公開build、`review.html`、預購及混單展示維持原流程；本輪不收款、不出貨、不正式部署。主要任務：[APP-02 #5](https://github.com/xk2022/codex-xk-apparel-store/issues/5)。
+本輪新增 [現貨＋預購混單 × Little Me 本機整合](docs/PREORDER_MIXED_CHECKOUT.md)：同 SKU 的現貨、預購分開入袋，預購需明確選擇；後端在同一交易扣現貨、占用配額，整單計算一次運費並保存成交快照。沿用上一輪 [現貨 pilot](docs/CHECKOUT_PILOT.md) 的獨立資料庫、冪等重送與取消回補。只有 `npm run dev:pilot` 明確啟用，普通公開build及 `review.html` 維持原展示流程；本輪不收款、不出貨、不部署或合併。主要任務：[APP-03 #7](https://github.com/xk2022/codex-xk-apparel-store/issues/7)。
 
 ## 體驗與建置
 
@@ -58,6 +58,6 @@ npm test
 - `styles.css`：原創暖白／中性色的響應版型。
 - [需求](docs/REQUIREMENTS.md)、[資料模型草案](docs/DATA_MODEL.md)、[驗收證據](docs/ACCEPTANCE.md)、[交接](docs/HANDOFF.md)、[照片來源與授權](docs/ASSET_SOURCES.md)。
 
-測試包括 TypeScript 編譯、Node 資料模型測試、happy-dom 介面整合及離線產物檢查。DOM 測試不能取代真實瀏覽器的排版、手機觸控與無障礙檢查；本輪未完成瀏覽器視覺 QA。
+測試包括 TypeScript 編譯、Node 資料模型測試、happy-dom 介面整合及離線產物檢查。本機混單另以 Chromium 390px／1440px 完成跨庫實際結帳、後台查單及取消，見 [畫面與驗收紀錄](docs/PREORDER_MIXED_CHECKOUT.md)；實體手機觸控及完整無障礙驗收仍待進行。
 
 原始照片的權利依各來源授權；本專案未附加開源授權。請勿複製參考商店的品牌、文案、圖片或原碼。
