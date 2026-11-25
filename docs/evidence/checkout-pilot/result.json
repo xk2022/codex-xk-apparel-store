@@ -1,0 +1,27 @@
+{
+  "passed": true,
+  "store": "http://localhost:5175",
+  "admin": "http://localhost:5173",
+  "orderId": 3,
+  "orderNo": "LM-F30F2839-65D9-4E34",
+  "source": "STOREFRONT",
+  "sku": "APP-PILOT-001-OLIVE-S",
+  "quantity": 1,
+  "unitPrice": 890,
+  "subtotal": 890,
+  "shippingFee": 65,
+  "total": 955,
+  "paymentStatus": "TEST_ONLY",
+  "responseLostThenReloadRetry": true,
+  "retryUsesSameKeyAndBody": true,
+  "orderRows": 1,
+  "orderMovements": 1,
+  "cancelMovements": 1,
+  "originalMovementLinked": true,
+  "finalStock": 1,
+  "viewports": [
+    390,
+    1440
+  ],
+  "errors": []
+}

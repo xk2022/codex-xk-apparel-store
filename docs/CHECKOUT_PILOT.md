@@ -32,7 +32,16 @@ npm test  # TypeScript + build + 原25個模型/DOM/產物測試 + pilot測試
 
 沒有獨立lint script，沿用既有TypeScript編譯與測試檢查，不捏造lint結果。新增Happy DOM覆蓋本機商品與政策、CSRF送出、保袋／表單、刷新重試相同key、持久化失敗不送單等。跨庫真正瀏覽器驗收腳本位於Little Me `scripts/apparel-acceptance.mjs`；資料庫三情境由Little Me真PostgreSQL整合測試執行，沒有用mock冒充庫存交易。
 
-受測SHA、完整結果與兩個PR將於本輪完成後補入。實體手機、正式API／付款／物流／個資流程未驗收；公開Pages及gh-pages分支本輪不更新。
+受測版本：商城 `e693119bcb587c17ccafc039873a34daddfd3ce5`；Little Me `0104bb4506b037972a4b795c3cf72f4e66ab2654`。此後僅補交接／證據提交；兩PR連結統一記於主要Issue #5，待使用者驗收後再合併。
+
+- `npm test` 34/34通過：原25案完整保留，新增9案；TypeScript/build與review.html產物檢查一併通過。沒有額外lint script，未虛報。
+- Little Me前端lint/typecheck/16tests/build通過；後端Maven clean verify 25/25真PostgreSQL測試通過，包含三項交易要求及V1→V2舊IG資料保留。
+- Chromium390px與1440px實際由衣序頁面選S、入袋、填示意資料、送出。在後端成功後丟失回應，刷新仍以同key／body取得原單；後台查到同單，來源STOREFRONT、SKU APP-PILOT-001-OLIVE-S、1件、單價890、運費65、總額955、TEST_ONLY。
+- 最後瀏覽器驗收單 LM-F30F2839-65D9-4E34，取消兩次後S庫存1，該單ORDER與CANCEL各1且原異動關聯正確；沒有真付款。重跑留下其他已取消的測試單，各屬不同驗收意圖，不是同key重複。
+- PostgreSQL三情境：同key並行僅一單一次扣庫、IG與商城競爭最後一件僅一成功且stock0、取消重送只回補一次至stock1。完整SQL及截圖見Little Me交接文件。
+- 最後代理修正 e693119 只將未連線HTTP502改503配合E0503；以真5176→未服務5999確認503／E0503／+08:00，並重跑34tests。
+
+證據：[手機收據](evidence/checkout-pilot/store-order-mobile.png)、[瀏覽器結果](evidence/checkout-pilot/result.json)；跨庫資料庫與後台證據見 [Little Me完整驗收](https://github.com/xk2022/xk-app-little-me-inventory/blob/feat/apparel-checkout-pilot/doc/apparel-checkout-pilot.md)。實體手機、正式API／付款／物流／個資流程未驗收；公開Pages及gh-pages分支本輪不更新。
 
 ## 交接與剩餘工作
 
