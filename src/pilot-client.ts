@@ -1,9 +1,14 @@
+export type FulfillmentType = "STOCK" | "PREORDER";
+export const fulfillmentType = (value?: FulfillmentType): FulfillmentType => value === "PREORDER" ? "PREORDER" : "STOCK";
 export interface PilotVariant {
   id: number;
   sku: string;
   color: string;
   size: string;
   available: boolean;
+  preorderEnabled?: boolean;
+  preorderAvailable?: boolean;
+  preorderArrivalNote?: string;
 }
 export interface PilotProduct {
   id: number;
@@ -33,7 +38,7 @@ export interface PilotDraft extends PilotCustomer {
 export interface PilotRequest {
   customer: PilotCustomer;
   note: string;
-  items: { variantId: number; quantity: number }[];
+  items: { variantId: number; quantity: number; fulfillmentType?: FulfillmentType }[];
 }
 export interface PendingCheckout {
   key: string;
@@ -50,6 +55,7 @@ export interface PilotOrder {
   total: number;
   paymentStatus: "TEST_ONLY";
   createdAt: string;
+  shippingNotice?: string;
   items: {
     variantId: number;
     sku: string;
@@ -60,6 +66,8 @@ export interface PilotOrder {
     quantity: number;
     unitPrice: number;
     lineTotal: number;
+    fulfillmentType?: FulfillmentType;
+    preorderArrivalNote?: string;
   }[];
 }
 export class PilotApiError extends Error {
@@ -149,6 +157,19 @@ export function pendingCheckout(
   existing?: PendingCheckout,
 ): PendingCheckout {
   const body = JSON.stringify(request);
-  if (existing?.body === body) return existing;
+  if (existing && sameCheckoutRequest(request, existing)) return existing;
   return { key: crypto.randomUUID(), body };
+}
+
+/** Missing fulfillment type in earlier pilot requests means STOCK. Never rewrite saved request bytes. */
+export function sameCheckoutRequest(request: PilotRequest, existing?: PendingCheckout): boolean {
+  if (!existing) return false;
+  const canonical = (value: PilotRequest) => JSON.stringify({
+    customer: { name: value.customer.name, phone: value.customer.phone, email: value.customer.email, store: value.customer.store },
+    note: value.note,
+    items: value.items.map(item => ({ variantId: item.variantId, quantity: item.quantity, fulfillmentType: fulfillmentType(item.fulfillmentType) }))
+      .sort((a, b) => a.variantId - b.variantId || a.fulfillmentType.localeCompare(b.fulfillmentType))
+  });
+  try { return canonical(request) === canonical(JSON.parse(existing.body)); }
+  catch { return false; }
 }

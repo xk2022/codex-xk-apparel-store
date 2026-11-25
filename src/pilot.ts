@@ -2,6 +2,9 @@ import {
   checkout,
   loadCatalog,
   pendingCheckout,
+  sameCheckoutRequest,
+  fulfillmentType,
+  type FulfillmentType,
   type PilotDraft,
   type PilotProduct,
   type PilotOrder,
@@ -13,6 +16,8 @@ import {
 interface BagLine {
   variantId: number;
   quantity: number;
+  fulfillmentType: FulfillmentType;
+  preorderArrivalNote: string;
   productName: string;
   styleNo: string;
   color: string;
@@ -64,7 +69,7 @@ export async function bootPilot(apiBase: string) {
       saved.draft
     ) {
       state = {
-        cart: saved.cart,
+        cart: saved.cart.map((line: BagLine) => ({ ...line, fulfillmentType: fulfillmentType(line.fulfillmentType), preorderArrivalNote: line.preorderArrivalNote || "" })),
         draft: { ...blankDraft(), ...saved.draft },
         orders: saved.orders,
         pending: saved.pending,
@@ -82,6 +87,7 @@ export async function bootPilot(apiBase: string) {
     previousFocus: HTMLElement | null = null,
     selected: PilotProduct | undefined,
     selectedVariant = 0,
+    selectedFulfillment: FulfillmentType = "STOCK",
     quantity = 1;
   function persist(required = false) {
     try {
@@ -108,14 +114,12 @@ export async function bootPilot(apiBase: string) {
       },
       note: state.draft.note,
       items: state.cart
-        .map((l) => ({ variantId: l.variantId, quantity: l.quantity }))
-        .sort((a, b) => a.variantId - b.variantId),
+        .map((l) => ({ variantId: l.variantId, quantity: l.quantity, fulfillmentType: l.fulfillmentType }))
+        .sort((a, b) => a.variantId - b.variantId || a.fulfillmentType.localeCompare(b.fulfillmentType)),
     };
   }
   function canRetry() {
-    return (
-      !!state.pending && state.pending.body === JSON.stringify(getRequest())
-    );
+    return sameCheckoutRequest(getRequest(), state.pending);
   }
   function currentVariant(id: number) {
     for (const p of products) {
@@ -146,19 +150,28 @@ export async function bootPilot(apiBase: string) {
     return `<div class="totals"><div><span>商品小計</span><span>${money(s.subtotal)}</span></div><div><span>本機測試運費</span><span>${money(s.shippingFee ?? s.shipping ?? 0)}</span></div><div class="grand"><span>合計${"shippingFee" in s ? "快照" : "（預估）"}</span><span>${money(s.total)}</span></div></div>`;
   }
   function notice() {
-    return '<div class="notice"><strong>本機測試 · 不收款、不出貨</strong>只接現貨；可售狀態不代表保留庫存，結果以送出時的資料庫交易為準。請使用示意收件資料。</div>';
+    return '<div class="notice"><strong>本機測試 · 不收款、不出貨</strong>請明確選擇現貨或預購；加入購物袋不保留數量，結果以送出時確認為準。請使用示意收件資料。</div>';
+  }
+  function fulfillmentHtml(line: { fulfillmentType?: FulfillmentType; preorderArrivalNote?: string }) {
+    return fulfillmentType(line.fulfillmentType) === 'PREORDER'
+      ? `<p class="pilot-fulfillment-label">預購</p><p class="pilot-arrival-note">${esc(line.preorderArrivalNote || '到貨時間待店家確認')}</p>`
+      : '<p class="pilot-fulfillment-label">現貨</p>';
+  }
+  function shippingNoticeHtml(lines: { fulfillmentType?: FulfillmentType }[], serverNotice?: string) {
+    return lines.some(line => fulfillmentType(line.fulfillmentType) === 'PREORDER')
+      ? `<div class="notice pilot-shipping-notice"><strong>${esc(serverNotice || '預購到齊後整單寄出')}</strong>整單一次運費，最終金額以後端接單快照為準。</div>` : '';
   }
   function renderHeader() {
     const count = state.cart.reduce((n, l) => n + l.quantity, 0);
     $("#header")!.innerHTML =
-      `<div class="header-inner"><a class="brand" href="#shop"><strong>衣序</strong><span>× LITTLE ME</span></a><nav class="main-nav"><a href="#shop">本機現貨</a><a href="?mode=demo#shop">原版展示</a></nav><div class="header-tools"><button class="icon-button" data-action="cart" aria-label="購物袋，${count} 件">購物袋 <span class="count">${count}</span></button></div></div>`;
+      `<div class="header-inner"><a class="brand" href="#shop"><strong>衣序</strong><span>× LITTLE ME</span></a><nav class="main-nav"><a href="#shop">本機選品</a><a href="?mode=demo#shop">原版展示</a></nav><div class="header-tools"><button class="icon-button" data-action="cart" aria-label="購物袋，${count} 件">購物袋 <span class="count">${count}</span></button></div></div>`;
     $(".demo-banner")!.innerHTML =
       "LOCAL PILOT <span>本機資料庫測試 · 不收款、不出貨 · 請勿填真實個資</span>";
     $("#footer")!.innerHTML =
       '<div class="page-width"><div class="footer-inner"><div><div class="footer-brand">衣序 SELECT × Little Me</div><p>本機 checkout 串接測試</p></div><p class="fineprint">XK SYSTEM · LOCAL PILOT<br>訂單與庫存異動會記錄於本機資料庫；不收款、不出貨。</p><a class="inline-link" href="?mode=demo#shop">切回原版 8 款商品展示</a></div></div>';
   }
   function list() {
-    main.innerHTML = `<div class="page-width"><div class="page-title"><p class="eyebrow">LOCAL PILOT / LITTLE ME</p><h1>讓喜歡，接上真實庫存。</h1><p>本機現貨接單測試，請只填示意資料。</p></div>${notice()}${loading ? '<p class="empty" role="status">正在讀取本機商品…</p>' : loadError ? `<div class="empty"><p role="alert">${esc(loadError)}</p><p>未切換成示意商品；購物袋與填寫內容已保留。</p><button class="secondary" data-action="reload">重新讀取</button></div>` : `<section class="collection"><div class="section-heading"><h2>Little Me 現貨</h2><span>${products.length} 件商品</span></div><div class="product-grid">${products.map((p) => `<article class="product-card"><button class="product-photo pilot-product-photo" data-product="${p.id}" aria-label="選擇${esc(p.name)}規格">${p.photoUrl ? `<img src="${esc(p.photoUrl)}" alt="${esc(p.name)}">` : '<div class="pilot-photo-empty">lm.</div>'}<span class="product-badge">${p.variants.some((v) => v.available) ? "現貨 · 以送出為準" : "暫無可售規格"}</span></button><div class="product-meta"><div><p class="eyebrow">${esc(p.styleNo)}</p><h3>${esc(p.name)}</h3><p>${money(p.price)}</p></div><button class="quick-add" data-product="${p.id}" aria-label="選擇${esc(p.name)}規格">＋</button></div></article>`).join("") || '<p class="empty">目前沒有可公開的現貨商品。您可以保留購物袋，稍後再試。</p>'}</div></section>`}</div>`;
+    main.innerHTML = `<div class="page-width"><div class="page-title"><p class="eyebrow">LOCAL PILOT / LITTLE ME</p><h1>讓喜歡，接上真實庫存。</h1><p>本機現貨與預購接單測試，請只填示意資料。</p></div>${notice()}${loading ? '<p class="empty" role="status">正在讀取本機商品…</p>' : loadError ? `<div class="empty"><p role="alert">${esc(loadError)}</p><p>未切換成示意商品；購物袋與填寫內容已保留。</p><button class="secondary" data-action="reload">重新讀取</button></div>` : `<section class="collection"><div class="section-heading"><h2>Little Me 本機選品</h2><span>${products.length} 件商品</span></div><div class="product-grid">${products.map((p) => `<article class="product-card"><button class="product-photo pilot-product-photo" data-product="${p.id}" aria-label="選擇${esc(p.name)}規格">${p.photoUrl ? `<img src="${esc(p.photoUrl)}" alt="${esc(p.name)}">` : '<div class="pilot-photo-empty">lm.</div>'}<span class="product-badge">${p.variants.some((v) => v.available) ? p.variants.some((v) => v.preorderEnabled && v.preorderAvailable) ? "現貨／預購 · 請選供貨方式" : "現貨 · 以送出為準" : p.variants.some((v) => v.preorderEnabled && v.preorderAvailable) ? "預購開放 · 須自行選擇" : "暫無可售規格"}</span></button><div class="product-meta"><div><p class="eyebrow">${esc(p.styleNo)}</p><h3>${esc(p.name)}</h3><p>${money(p.price)}</p></div><button class="quick-add" data-product="${p.id}" aria-label="選擇${esc(p.name)}規格">＋</button></div></article>`).join("") || '<p class="empty">目前沒有可公開的商品。您可以保留購物袋，稍後再試。</p>'}</div></section>`}</div>`;
   }
   function modal(content: string, name: string) {
     if (!overlay.firstChild) previousFocus = document.activeElement as HTMLElement;
@@ -179,16 +192,18 @@ export async function bootPilot(apiBase: string) {
       selected.variants.find((v) => v.available) || selected.variants[0]
     ).id;
     quantity = 1;
+    selectedFulfillment = "STOCK";
     renderDetail();
   }
   function renderDetail() {
     const active = document.activeElement as HTMLElement | null;
-    const focusKey = active?.closest('#product-detail') ? (['variant', 'qty'] as const).find(key => active.dataset[key] !== undefined) : undefined;
+    const focusKey = active?.closest('#product-detail') ? (['variant', 'fulfillment', 'qty'] as const).find(key => active.dataset[key] !== undefined) : undefined;
     const focusValue = focusKey ? active?.dataset[focusKey] : undefined;
     const p = selected!,
       v = p.variants.find((v) => v.id === selectedVariant)!;
+    const sellable = selectedFulfillment === 'PREORDER' ? v.preorderEnabled && v.preorderAvailable : v.available;
     modal(
-      `<div id="product-detail"><p class="eyebrow">${esc(p.styleNo)} / LOCAL PILOT</p><h2>${esc(p.name)}</h2><p class="detail-price">${money(p.price)}</p><p>${esc(p.description)}</p><span class="field-label">顏色 / 尺寸</span><div class="options">${p.variants.map((v) => `<button class="option ${v.id === selectedVariant ? "selected" : ""}" data-variant="${v.id}" aria-pressed="${v.id === selectedVariant}">${esc(v.color)} / ${esc(v.size)}${v.available ? "" : " · 暫無現貨"}</button>`).join("")}</div><p class="availability">${v.available ? "可售 · 數量以送出結果為準" : "此規格目前暫無現貨"}</p><div class="purchase-row"><div class="quantity"><button data-qty="-1" aria-label="減少數量" ${quantity <= 1 ? "disabled" : ""}>−</button><span id="detail-quantity">${quantity}</span><button data-qty="1" aria-label="增加數量">＋</button></div><button class="primary" data-action="add" ${v.available ? "" : "disabled"}>加入購物車</button></div><p class="fineprint">不提供實際庫存件數；加入購物袋不保留庫存。</p></div>`,
+      `<div id="product-detail"><p class="eyebrow">${esc(p.styleNo)} / LOCAL PILOT</p><h2>${esc(p.name)}</h2><p class="detail-price">${money(p.price)}</p><p>${esc(p.description)}</p><span class="field-label">顏色 / 尺寸</span><div class="options">${p.variants.map((v) => `<button class="option ${v.id === selectedVariant ? "selected" : ""}" data-variant="${v.id}" aria-pressed="${v.id === selectedVariant}">${esc(v.color)} / ${esc(v.size)}${v.available ? "" : " · 暫無現貨"}</button>`).join("")}</div><span class="field-label">供貨方式（請明確選擇）</span><div class="options pilot-fulfillment-options" role="group" aria-label="供貨方式"><button class="option ${selectedFulfillment === 'STOCK' ? 'selected' : ''}" data-fulfillment="STOCK" aria-pressed="${selectedFulfillment === 'STOCK'}">現貨${v.available ? '' : ' · 暫時售完'}</button><button class="option ${selectedFulfillment === 'PREORDER' ? 'selected' : ''}" data-fulfillment="PREORDER" aria-pressed="${selectedFulfillment === 'PREORDER'}" ${v.preorderEnabled ? '' : 'disabled'}>預購${v.preorderEnabled ? '' : ' · 未開放'}</button></div><p class="availability">${selectedFulfillment === 'PREORDER' ? sellable ? '預購開放 · 數量以送出結果為準' : '此規格目前無法接受預購' : v.available ? '現貨可售 · 數量以送出結果為準' : '此規格目前暫無現貨；不會自動改為預購'}</p>${selectedFulfillment === 'PREORDER' ? fulfillmentHtml({fulfillmentType:'PREORDER',preorderArrivalNote:v.preorderArrivalNote}) : ''}<div class="purchase-row"><div class="quantity"><button data-qty="-1" aria-label="減少數量" ${quantity <= 1 ? "disabled" : ""}>−</button><span id="detail-quantity">${quantity}</span><button data-qty="1" aria-label="增加數量">＋</button></div><button class="primary" data-action="add" ${sellable ? "" : "disabled"}>加入購物車</button></div><p class="fineprint">不提供實際庫存或預購配額件數；加入購物袋不保留數量。</p></div>`,
       "商品規格",
     );
     if (focusKey) {
@@ -198,7 +213,7 @@ export async function bootPilot(apiBase: string) {
   }
   function bag() {
     modal(
-      `<h2>購物袋</h2><div class="cart-lines">${state.cart.map((l) => `<div class="cart-item">${lineImage(l)}<div><h3>${esc(l.productName)}</h3><p>${esc(l.styleNo)} · ${esc(l.color)} / ${esc(l.size)}</p><p>${money(l.unitPrice)}</p><div class="quantity"><button data-cart-qty="${l.variantId}" data-value="${l.quantity - 1}" aria-label="減少${esc(l.productName)}數量">−</button><span>${l.quantity}</span><button data-cart-qty="${l.variantId}" data-value="${l.quantity + 1}" aria-label="增加${esc(l.productName)}數量">＋</button></div><button class="remove" data-cart-qty="${l.variantId}" data-value="0">移除</button></div></div>`).join("") || '<p class="empty">購物袋還空著。</p>'}</div>${state.cart.length ? `${notice()}${summary(totals())}<p class="fineprint">預估運費以已讀取的本機政策計算，最後金額由後端核定。</p><button class="primary wide" data-action="checkout">前往本機測試結帳</button>` : ""}`,
+      `<h2>購物袋</h2><div class="cart-lines">${state.cart.map((l) => `<div class="cart-item">${lineImage(l)}<div><h3>${esc(l.productName)}</h3><p>${esc(l.styleNo)} · ${esc(l.color)} / ${esc(l.size)}</p>${fulfillmentHtml(l)}<p>${money(l.unitPrice)}</p><div class="quantity"><button data-cart-qty="${l.variantId}" data-fulfillment-type="${l.fulfillmentType}" data-value="${l.quantity - 1}" aria-label="減少${l.fulfillmentType === 'PREORDER' ? '預購' : '現貨'}${esc(l.productName)}數量">−</button><span>${l.quantity}</span><button data-cart-qty="${l.variantId}" data-fulfillment-type="${l.fulfillmentType}" data-value="${l.quantity + 1}" aria-label="增加${l.fulfillmentType === 'PREORDER' ? '預購' : '現貨'}${esc(l.productName)}數量">＋</button></div><button class="remove" data-cart-qty="${l.variantId}" data-fulfillment-type="${l.fulfillmentType}" data-value="0">移除</button></div></div>`).join("") || '<p class="empty">購物袋還空著。</p>'}</div>${state.cart.length ? `${notice()}${shippingNoticeHtml(state.cart)}${summary(totals())}<p class="fineprint">預估運費以已讀取的本機政策計算，最後金額由後端核定。</p><button class="primary wide" data-action="checkout">前往本機測試結帳</button>` : ""}`,
       "購物袋",
     );
   }
@@ -208,7 +223,7 @@ export async function bootPilot(apiBase: string) {
         '<div class="page-width"><div class="page-title"><h1>購物袋還空著</h1></div><a class="primary" href="#shop">回到現貨</a></div>';
       return;
     }
-    main.innerHTML = `<div class="page-width"><div class="page-title"><p class="eyebrow">LOCAL CHECKOUT / NO PAYMENT</p><h1>本機測試結帳</h1><p>送出會建立本機資料庫訂單並扣庫；不會收款或出貨。</p></div><div class="checkout-layout"><form id="checkout-form" novalidate><div class="panel"><h2>示意收件資料</h2><button type="button" class="inline-link" data-action="fill-demo" ${submitting ? "disabled" : ""}>填入示意資料</button><div class="form-grid" style="margin-top:22px">${[
+    main.innerHTML = `<div class="page-width"><div class="page-title"><p class="eyebrow">LOCAL CHECKOUT / NO PAYMENT</p><h1>本機測試結帳</h1><p>送出會依所選供貨方式建立本機測試接單；不會收款或出貨。</p></div><div class="checkout-layout"><form id="checkout-form" novalidate><div class="panel"><h2>示意收件資料</h2><button type="button" class="inline-link" data-action="fill-demo" ${submitting ? "disabled" : ""}>填入示意資料</button><div class="form-grid" style="margin-top:22px">${[
       ["name", "收件人姓名", "text"],
       ["phone", "手機號碼", "tel"],
       ["email", "Email", "email"],
@@ -220,7 +235,7 @@ export async function bootPilot(apiBase: string) {
       )
       .join(
         "",
-      )}<label class="full">接單備註<textarea name="note" rows="3" maxlength="1000" ${submitting ? "disabled" : ""}>${esc(state.draft.note)}</textarea></label></div>${notice()}<p class="fineprint">此流程不選擇付款方式、不收集卡號。資料只用於本機測試。</p><p class="error" id="checkout-error" role="alert">${esc(submitError)}</p>${canRetry() ? '<p class="notice pilot-retry-note">上次送出結果尚待確認。重試會沿用原本識別碼與完全相同的資料。</p>' : ""}<button class="primary wide" type="submit" ${submitting ? "disabled" : ""}>${submitting ? "正在確認接單…" : canRetry() ? "重試原送出 · 不會重複扣庫" : "送出本機測試接單"}</button></div></form><aside class="panel checkout-summary"><h2>購物袋摘要</h2>${state.cart.map((l) => `<div class="order-mini">${lineImage(l)}<div>${esc(l.productName)}<p>${esc(l.color)} / ${esc(l.size)} × ${l.quantity}</p></div><span>${money(l.unitPrice * l.quantity)}</span></div>`).join("")}${summary(totals())}<p class="fineprint">${policy ? esc(policy.notice) : "政策尚未載入；後端會核定最終金額。"}</p><button class="inline-link" data-action="cart" ${submitting ? "disabled" : ""}>修改購物袋</button></aside></div></div>`;
+      )}<label class="full">接單備註<textarea name="note" rows="3" maxlength="1000" ${submitting ? "disabled" : ""}>${esc(state.draft.note)}</textarea></label></div>${notice()}<p class="fineprint">此流程不選擇付款方式、不收集卡號。資料只用於本機測試。</p><p class="error" id="checkout-error" role="alert">${esc(submitError)}</p>${canRetry() ? '<p class="notice pilot-retry-note">上次送出結果尚待確認。重試會沿用原本識別碼與完全相同的資料。</p>' : ""}<button class="primary wide" type="submit" ${submitting ? "disabled" : ""}>${submitting ? "正在確認接單…" : canRetry() ? "重試原送出 · 不會重複扣庫" : "送出本機測試接單"}</button></div></form><aside class="panel checkout-summary"><h2>購物袋摘要</h2>${state.cart.map((l) => `<div class="order-mini">${lineImage(l)}<div>${esc(l.productName)}<p>${esc(l.color)} / ${esc(l.size)} × ${l.quantity}</p>${fulfillmentHtml(l)}</div><span>${money(l.unitPrice * l.quantity)}</span></div>`).join("")}${shippingNoticeHtml(state.cart)}${summary(totals())}<p class="fineprint">${policy ? esc(policy.notice) : "政策尚未載入；後端會核定最終金額。"}</p><button class="inline-link" data-action="cart" ${submitting ? "disabled" : ""}>修改購物袋</button></aside></div></div>`;
   }
   function orderPage(id: string) {
     const o = state.orders.find((o) => String(o.id) === id || o.orderNo === id);
@@ -229,7 +244,7 @@ export async function bootPilot(apiBase: string) {
         '<div class="page-width"><div class="page-title"><h1>此瀏覽器沒有這筆測試訂單快照</h1></div><a class="primary" href="#shop">回到現貨</a></div>';
       return;
     }
-    main.innerHTML = `<div class="page-width"><section class="success"><div class="success-header"><div class="success-symbol">✓</div><p class="eyebrow">LOCAL DATABASE ORDER</p><h1>本機測試接單已建立</h1><p>未收款、不會出貨 · 後端金額快照</p></div><div class="panel"><dl class="definition"><dt>訂單編號</dt><dd>${esc(o.orderNo)}</dd><dt>來源</dt><dd>${esc(o.source)}</dd><dt>訂單狀態</dt><dd>${o.status === "CANCELLED" ? "已取消" : esc(o.status)}</dd><dt>付款狀態</dt><dd>${esc(o.paymentStatus)} · 本機測試，不收款</dd></dl>${o.items.map((i) => `<div class="order-mini pilot-order-item"><div>${esc(i.productName)}<p>${esc(i.styleNo)} · ${esc(i.sku)} · ${esc(i.color)} / ${esc(i.size)} × ${i.quantity}</p><p>單價快照 ${money(i.unitPrice)}</p></div><span>${money(i.lineTotal)}</span></div>`).join("")}${summary(o)}<p class="fineprint">接單會記錄在本機 Little Me 管理端；此頁只保留不含收件資料的回應快照，並非付款成功證明。</p></div><div class="actions"><a class="primary" href="#shop">繼續挑選</a><a class="secondary" href="?mode=demo#shop">原版展示</a></div></section></div>`;
+    main.innerHTML = `<div class="page-width"><section class="success"><div class="success-header"><div class="success-symbol">✓</div><p class="eyebrow">LOCAL DATABASE ORDER</p><h1>本機測試接單已建立</h1><p>未收款、不會出貨 · 後端金額快照</p></div><div class="panel"><dl class="definition"><dt>訂單編號</dt><dd>${esc(o.orderNo)}</dd><dt>來源</dt><dd>${esc(o.source)}</dd><dt>訂單狀態</dt><dd>${o.status === "CANCELLED" ? "已取消" : esc(o.status)}</dd><dt>付款狀態</dt><dd>${esc(o.paymentStatus)} · 本機測試，不收款</dd></dl>${o.items.map((i) => `<div class="order-mini pilot-order-item"><div>${esc(i.productName)}<p>${esc(i.styleNo)} · ${esc(i.sku)} · ${esc(i.color)} / ${esc(i.size)} × ${i.quantity}</p>${fulfillmentHtml(i)}<p>單價快照 ${money(i.unitPrice)}</p></div><span>${money(i.lineTotal)}</span></div>`).join("")}${shippingNoticeHtml(o.items, o.shippingNotice)}${summary(o)}<p class="fineprint">接單會記錄在本機 Little Me 管理端；此頁只保留不含收件資料的回應快照，並非付款成功證明。</p></div><div class="actions"><a class="primary" href="#shop">繼續挑選</a><a class="secondary" href="?mode=demo#shop">原版展示</a></div></section></div>`;
   }
   function route() {
     close();
@@ -254,6 +269,7 @@ export async function bootPilot(apiBase: string) {
           l.styleNo = current.p.styleNo;
           l.unitPrice = current.p.price;
           l.photoUrl = current.p.photoUrl;
+          l.preorderArrivalNote = l.fulfillmentType === "PREORDER" ? current.v.preorderArrivalNote || "" : "";
         }
       }
       persist();
@@ -308,10 +324,13 @@ export async function bootPilot(apiBase: string) {
         return;
       }
       const unavailable = state.cart.find(
-        (l) => !currentVariant(l.variantId)?.v.available,
+        (l) => {
+          const variant = currentVariant(l.variantId)?.v;
+          return l.fulfillmentType === 'PREORDER' ? !variant?.preorderEnabled || !variant.preorderAvailable : !variant?.available;
+        },
       );
       if (unavailable) {
-        submitError = `${unavailable.productName}（${unavailable.color} / ${unavailable.size}）目前無法出售；請修改購物袋。`;
+        submitError = `${unavailable.productName}（${unavailable.color} / ${unavailable.size}）${unavailable.fulfillmentType === "PREORDER" ? "目前無法預購" : "目前無現貨"}；請修改購物袋，不會自動切換供貨方式。`;
         formPage();
         return;
       }
@@ -359,6 +378,13 @@ export async function bootPilot(apiBase: string) {
     }
     if (el.dataset.variant) {
       selectedVariant = Number(el.dataset.variant);
+      selectedFulfillment = "STOCK";
+      quantity = 1;
+      renderDetail();
+      return;
+    }
+    if (el.dataset.fulfillment) {
+      selectedFulfillment = fulfillmentType(el.dataset.fulfillment as FulfillmentType);
       quantity = 1;
       renderDetail();
       return;
@@ -372,7 +398,7 @@ export async function bootPilot(apiBase: string) {
       const n = Number(el.dataset.value);
       if (Number.isSafeInteger(n) && n >= 0) {
         state.cart = state.cart.flatMap((l) =>
-          l.variantId === Number(el.dataset.cartQty)
+          l.variantId === Number(el.dataset.cartQty) && l.fulfillmentType === fulfillmentType(el.dataset.fulfillmentType as FulfillmentType)
             ? n
               ? [{ ...l, quantity: n }]
               : []
@@ -403,13 +429,15 @@ export async function bootPilot(apiBase: string) {
       case "add": {
         const p = selected!,
           v = p.variants.find((v) => v.id === selectedVariant)!;
-        if (!v.available) return;
-        const line = state.cart.find((l) => l.variantId === v.id);
+        if (selectedFulfillment === 'PREORDER' ? !v.preorderEnabled || !v.preorderAvailable : !v.available) return;
+        const line = state.cart.find((l) => l.variantId === v.id && l.fulfillmentType === selectedFulfillment);
         if (line) line.quantity += quantity;
         else
           state.cart.push({
             variantId: v.id,
             quantity,
+            fulfillmentType: selectedFulfillment,
+            preorderArrivalNote: selectedFulfillment === "PREORDER" ? v.preorderArrivalNote || "" : "",
             productName: p.name,
             styleNo: p.styleNo,
             color: v.color,
