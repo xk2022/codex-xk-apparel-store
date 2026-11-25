@@ -234,3 +234,30 @@ test('a legacy stored order with no fulfillmentType renders as stock without inv
   assert.doesNotMatch(text(window, '#main'), /預購到齊後整單寄出/);
   assert.equal(submissions(requests).length, 0);
 });
+
+test('refilling identical demo details after a lost response preserves the pending key and exact payload', async t => {
+  let attempts = 0;
+  const { window, requests } = fixture(t, { submit: async () => {
+    if (++attempts === 1) throw new TypeError('response lost after server commit');
+    return response(mixedOrder);
+  } });
+  await add(window, 'STOCK');
+  await add(window, 'PREORDER');
+  await checkout(window);
+  click(window, '[data-action="fill-demo"]');
+  submit(window);
+  await until(() => submissions(requests).length === 1 && window.document.querySelector('#checkout-error')?.textContent.trim(), 'first response lost');
+  const first = submissions(requests)[0];
+  click(window, '[data-action="fill-demo"]');
+  const retained = JSON.parse(window.localStorage.getItem(STORAGE_KEY)).pending;
+  assert.ok(retained, 'an unchanged recipient draft must not discard the saved retry intent');
+  assert.equal(retained.key, first.headers['idempotency-key']);
+  assert.equal(retained.body, first.body);
+  submit(window);
+  await until(() => submissions(requests).length === 2, 'original request retry');
+  const replay = submissions(requests)[1];
+  assert.equal(replay.headers['idempotency-key'], first.headers['idempotency-key']);
+  assert.equal(replay.body, first.body);
+  await until(() => window.document.querySelector('#main')?.textContent.includes(mixedOrder.orderNo), 'replayed backend receipt');
+  assert.equal(text(window, '#header .count'), '0');
+});

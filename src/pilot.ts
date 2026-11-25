@@ -451,14 +451,17 @@ export async function bootPilot(apiBase: string) {
         break;
       }
       case "fill-demo": {
-        state.draft = {
+        const nextDraft: PilotDraft = {
           name: "示意收件人",
           phone: "0900000000",
           email: "demo@example.com",
           store: "衣序本機示意門市（非真實門市）",
           note: state.draft.note,
         };
-        changed();
+        if (JSON.stringify(nextDraft) !== JSON.stringify(state.draft)) {
+          state.draft = nextDraft;
+          changed();
+        }
         formPage();
         break;
       }
