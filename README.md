@@ -6,6 +6,8 @@
 
 已發布的線上預覽：[開啟衣序 SELECT](https://xk2022.github.io/codex-xk-apparel-store/)。
 
+本輪新增 [現貨結帳 × Little Me 本機 pilot](docs/CHECKOUT_PILOT.md)：以獨立測試資料庫驗證現貨接單、冪等重送與庫存回補。只有 `npm run dev:pilot` 明確啟用，普通公開build、`review.html`、預購及混單展示維持原流程；本輪不收款、不出貨、不正式部署。主要任務：[APP-02 #5](https://github.com/xk2022/codex-xk-apparel-store/issues/5)。
+
 ## 體驗與建置
 
 使用 Node.js 24 LTS 與 npm：
@@ -46,7 +48,7 @@ npm test
 
 待店家確認的示意假設：運費 NT$65、滿 NT$2,000 免運、各 SKU 可購量及交期。照片不會隨顏色切換，畫面有明確提示。
 
-資料保存在當前瀏覽器 `localStorage`；停用儲存時會退回當次記憶體。展示會員及後台沒有正式身分驗證。這不是可營運的商城，不具備真實會員、資料庫、多人庫存鎖、金物流、發票、退款或通知功能。
+原公開／離線展示的資料保存在當前瀏覽器 `localStorage`；停用儲存時會退回當次記憶體。展示會員及後台沒有正式身分驗證。這不是可營運的商城，不具備真實會員、金物流、發票、退款或通知功能。本機pilot另接Little Me資料庫與交易鎖，仍只用測試資料；不能把此驗證視為正式營運上線。
 
 ## 維護入口
 

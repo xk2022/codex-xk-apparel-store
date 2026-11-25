@@ -3,10 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=24" },
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "build": "tsc --noEmit && node build.mjs",
-    "test": "npm run build && node --test --test-isolation=none tests/*.test.mjs"
+    "test": "npm run build && node --test --test-isolation=none tests/*.test.mjs",
+    "dev:pilot": "npm run build && node scripts/serve-pilot.mjs"
   },
   "devDependencies": {
     "typescript": "^5.9.3",
